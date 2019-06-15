@@ -122,11 +122,35 @@ def write_xls_append(path, value, sheet_name):
     worksheet = workbook.sheet_by_name(sheets[i])  # 按索引取到表格
 
     rows_old = worksheet.nrows  # 获取表格中已存在数据的行数
+    # 得到表格中存在的所有的日期 包括空串
+    all_date = []
+    for n in range(1, rows_old):
+        cell = worksheet.cell_value(n, 0)  # 取第一列数据
+        if cell not in all_date:
+            all_date.append(cell)
+    # print("现在表中第一列已经有的日期：{}".format(all_date))
+
     new_workbook = copy(workbook)  # 将xlrd对象拷贝转化为xlwt对象
     new_worksheet = new_workbook.get_sheet(i)  # 获取转化后工作簿中的第一个表格
-    # 往表格中写入数据（已有行后开始写入，列坐标从0增长）
-    for x in range(0, index):
-        new_worksheet.write(rows_old, x, value[x])
+
+    """
+        用行数进行
+        行数=1, 说明只有表头，把第一组数据写入第二行
+        行数>1, 用all_date判断
+            如果value[0]不在列表里，空一行从rows+1写入
+            存在列表里，接着写
+    """
+    if rows_old <= 1:
+        for x in range(0, index):
+            new_worksheet.write(rows_old, x, value[x])
+    else:
+        if value[0] in all_date:
+            for x in range(0, index):
+                new_worksheet.write(rows_old, x, value[x])
+        else:
+            for x in range(0, index):
+                new_worksheet.write(rows_old + 1, x, value[x])
+
     # 保存工作簿
     new_workbook.save(path)
     print("{}:{}    打卡信息写入Excel成功！！！".format(value[1], value[0]))
